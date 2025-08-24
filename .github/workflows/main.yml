@@ -44,8 +44,8 @@ jobs:
           pip install -r requirements.txt
           
           # Restart your bot service
-          sudo systemctl restart telegram-bot
+          pkill -f "python main.py" || true
           
           # Check if the service is running properly
           sleep 5
-          sudo systemctl status telegram-bot
+          python main.py
