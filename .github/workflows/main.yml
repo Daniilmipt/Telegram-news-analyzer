@@ -1,0 +1,51 @@
+name: Deploy Telegram Bot
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.3'
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        script: |
+          # Navigate to your bot directory
+          cd bot/Telegram-news-analyzer
+          
+          # Pull the latest changes
+          git pull origin master
+          
+          # Create virtual environment if it doesn't exist
+          if [ ! -d "venv" ]; then
+            python3 -m venv venv
+          fi
+          
+          # Activate virtual environment and install dependencies
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          
+          # Restart your bot service
+          sudo systemctl restart telegram-bot
+          
+          # Check if the service is running properly
+          sleep 5
+          sudo systemctl status telegram-bot
