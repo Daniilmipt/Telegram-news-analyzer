@@ -15,6 +15,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Debug SSH Key
+      run: |
+        echo "Checking SSH key format..."
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        echo "Key content (first few lines):"
+        head -5 ~/.ssh/deploy_key
+        echo "Key file info:"
+        ls -la ~/.ssh/deploy_key
+        echo "Testing key format:"
+        ssh-keygen -l -f ~/.ssh/deploy_key || echo "Key format check failed"
+
+    - name: Setup SSH Agent
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Test SSH Connection
+      run: |
+        ssh -o StrictHostKeyChecking=no -v ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
