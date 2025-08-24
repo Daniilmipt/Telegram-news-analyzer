@@ -1,0 +1,23 @@
+# Telegram API Configuration
+# Get these from https://my.telegram.org/auth
+TELEGRAM_API_ID=your_api_id_here
+TELEGRAM_API_HASH=your_api_hash_here
+TELEGRAM_PHONE=+1234567890
+
+# Telegram Bot Token
+# Get this from @BotFather
+BOT_TOKEN=your_bot_token_here
+
+# Channels to analyze
+CHANNEL_USERNAME=@yourchannel
+CHANNELS_LIST=@yourchannel,@anotherchannel,@thirdchannel
+
+# Analysis settings
+NEGATIVE_COMMENT_THRESHOLD=0.3
+OUTPUT_DIR=output 
+
+# Logging settings
+LOG_DIR=logs
+LOG_LEVEL=INFO
+LOG_TO_FILE=true
+LOG_TO_CONSOLE=true
