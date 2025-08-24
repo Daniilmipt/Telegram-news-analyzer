@@ -18,6 +18,8 @@ OUTPUT_DIR=output
 
 # Logging settings
 LOG_DIR=logs
-LOG_LEVEL=INFO
 LOG_TO_FILE=true
 LOG_TO_CONSOLE=true
+
+# Max messages to analyze
+MAX_MESSAGES=200

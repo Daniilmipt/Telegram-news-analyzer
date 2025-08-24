@@ -1,7 +1,3 @@
-"""
-Centralized logging configuration for News Analyzer project
-"""
-
 import logging
 import logging.handlers
 import os
@@ -9,122 +5,93 @@ from datetime import datetime
 
 
 class LoggingConfig:
-    """Centralized logging configuration class"""
-    
-    # Log directory
     LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
     
-    # Single unified log file
     LOG_FILE = os.path.join(LOG_DIR, "news_analyzer.log")
     
-    # Log format
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     
-    # Log levels
-    DEFAULT_LEVEL = logging.INFO
-    
     @classmethod
-    def setup_logging(cls, logger_name=None, log_to_file=True, 
-                     log_to_console=True, log_level=None):
+    def setup_logging(cls, logger_name=None, log_to_file=True, log_to_console=True):
         """
-        Setup centralized logging configuration
+        Настройка централизованного логирования
         
         Args:
-            logger_name: Name of the logger (uses root logger if None)
-            log_to_file: Whether to log to file
-            log_to_console: Whether to log to console
-            log_level: Logging level (uses DEFAULT_LEVEL if None)
+            logger_name: Имя логгера (используется root логгер, если None)
+            log_to_file: Логировать в файл
+            log_to_console: Логировать в консоль
         
         Returns:
-            Configured logger instance
+            Настроенный экземпляр логгера
         """
         # Create logs directory if it doesn't exist
         if not os.path.exists(cls.LOG_DIR):
             os.makedirs(cls.LOG_DIR)
         
-        # Get logger
         logger = logging.getLogger(logger_name)
         
-        # Clear existing handlers to avoid duplicates
         logger.handlers = []
         
-        # Set log level
-        level = log_level or cls.DEFAULT_LEVEL
-        logger.setLevel(level)
+        logger.setLevel(logging.DEBUG)
         
-        # Create formatter
         formatter = logging.Formatter(cls.LOG_FORMAT, cls.DATE_FORMAT)
         
-        # Add file handler with rotation
         if log_to_file:
-            # Single unified log file with rotation (max 10MB, keep 5 files)
+            # Один файл лога с ротацией (макс. 10MB, с бекпом из 5 файлов)
             file_handler = logging.handlers.RotatingFileHandler(
                 cls.LOG_FILE,
                 maxBytes=10*1024*1024,  # 10MB
                 backupCount=5
             )
-            file_handler.setLevel(level)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         
-        # Add console handler
+        # Пишем лог в консоль
         if log_to_console:
             console_handler = logging.StreamHandler()
-            console_handler.setLevel(level)
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
         
-        # Prevent propagation to root logger to avoid duplicate messages
+        # Предотвращаем распространение лога в root логгер, чтобы избежать дублирования сообщений
         logger.propagate = False
         
         return logger
     
     @classmethod
-    def setup_bot_logging(cls, log_level=None):
+    def setup_bot_logging(cls):
         """
-        Setup specialized logging for Telegram bot
-        
-        Args:
-            log_level: Logging level (uses DEFAULT_LEVEL if None)
+        Настройка логирования для Telegram бота
         
         Returns:
-            Configured logger instance for bot
+            Настроенный экземпляр логгера для бота
         """
-        # Create logs directory if it doesn't exist
         if not os.path.exists(cls.LOG_DIR):
             os.makedirs(cls.LOG_DIR)
         
-        # Get bot logger
         logger = logging.getLogger('telegram_bot')
         
-        # Clear existing handlers
         logger.handlers = []
         
-        # Set log level
-        level = log_level or cls.DEFAULT_LEVEL
-        logger.setLevel(level)
+        logger.setLevel(logging.DEBUG)
         
-        # Create formatter
         formatter = logging.Formatter(cls.LOG_FORMAT, cls.DATE_FORMAT)
         
-        # Unified log file with rotation
+        # Один файл лога с ротацией (макс. 10MB, с бекпом из 5 файлов)
         file_handler = logging.handlers.RotatingFileHandler(
             cls.LOG_FILE,
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
-        file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         
-        # Console output for bot
+        # Пишем лог в консоль
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
         
-        # Prevent propagation to avoid duplicates
+        # Предотвращаем распространение лога в root логгер, чтобы избежать дублирования сообщений
         logger.propagate = False
         
         return logger
@@ -132,10 +99,10 @@ class LoggingConfig:
     @classmethod
     def get_log_files_info(cls):
         """
-        Get information about log files
+        Получить информацию о файлах лога
         
         Returns:
-            Dict with log files information
+            Словарь с информацией о файлах лога
         """
         info = {}
         
@@ -161,24 +128,20 @@ class LoggingConfig:
         return info
 
 
-# Convenience function for quick setup
-def setup_logger(name=None, level=logging.INFO, 
-                file_logging=True, console_logging=True):
+def setup_logger(name=None, file_logging=True, console_logging=True):
     """
-    Quick setup function for logger
+    Быстрая настройка логгера
     
     Args:
-        name: Logger name
-        level: Log level
-        file_logging: Enable file logging
-        console_logging: Enable console logging
+        name: Имя логгера
+        file_logging: Включить логирование в файл
+        console_logging: Включить логирование в консоль
     
     Returns:
-        Configured logger
+        Настроенный логгер
     """
     return LoggingConfig.setup_logging(
         logger_name=name,
         log_to_file=file_logging,
-        log_to_console=console_logging,
-        log_level=level
+        log_to_console=console_logging
     )

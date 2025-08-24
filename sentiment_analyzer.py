@@ -1,13 +1,10 @@
 import re
-import logging
 from typing import List, Dict, Tuple
-from textblob import TextBlob
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 import torch
 from config import Config
 from logging_config import setup_logger
 
-# Configure logging with file output
 logger = setup_logger(__name__)
 
 class SentimentAnalyzer:
@@ -33,10 +30,10 @@ class SentimentAnalyzer:
                 device=0 if self.device == "cuda" else -1,
                 return_all_scores=True
             )
-            logger.info(f"Инициализирована модель настроений на {self.device}")
+            logger.info(f"Initialized sentiment model on {self.device}")
         except Exception as e:
-            logger.warning(f"Не удалось загрузить трансформер модель: {e}")
-            logger.info("Переход на TextBlob для анализа настроений")
+            logger.warning(f"Failed to load transformer model: {e}")
+            logger.info("Falling back to TextBlob for sentiment analysis")
             self.sentiment_pipeline = None
     
     def clean_text(self, text: str) -> str:
@@ -77,28 +74,10 @@ class SentimentAnalyzer:
             
         except Exception as e:
             logger.error(f"Ошибка в анализе настроений трансформером: {e}")
-            return self.analyze_sentiment_textblob(text)
-    
-    def analyze_sentiment_textblob(self, text: str) -> Dict[str, float]:
-        """Резервный анализ настроений с использованием TextBlob"""
-        try:
-            blob = TextBlob(text)
-            polarity = blob.sentiment.polarity
-            
-            # Преобразование полярности в оценки позитивного/негативного/нейтрального
-            if polarity > Config.SENTIMENT_THRESHOLD:
-                return {'positive': abs(polarity), 'negative': 0.0, 'neutral': 1 - abs(polarity)}
-            elif polarity < -Config.SENTIMENT_THRESHOLD:
-                return {'positive': 0.0, 'negative': abs(polarity), 'neutral': 1 - abs(polarity)}
-            else:
-                return {'positive': 0.0, 'negative': 0.0, 'neutral': 1.0}
-                
-        except Exception as e:
-            logger.error(f"Ошибка в анализе настроений TextBlob: {e}")
-            return {'positive': 0.0, 'negative': 0.0, 'neutral': 1.0}
+            return {}
     
     def analyze_sentiment(self, text: str) -> Dict[str, float]:
-        """Основная функция анализа настроений"""
+        """Анализ настроений"""
         cleaned_text = self.clean_text(text)
 
         if not cleaned_text:
@@ -107,7 +86,8 @@ class SentimentAnalyzer:
         if self.sentiment_pipeline:
             return self.analyze_sentiment_transformer(cleaned_text)
         else:
-            return self.analyze_sentiment_textblob(cleaned_text)
+            logger.error("Модель анализа настроений не инициализирована")
+            return {}
     
     def get_dominant_sentiment(self, sentiment_scores: Dict[str, float]) -> str:
         """Получение доминирующего настроения из оценок"""
@@ -184,8 +164,8 @@ class SentimentAnalyzer:
             dominant_sentiment = self.get_dominant_sentiment(post_sentiment)
             is_negative = self.is_negative(post_sentiment)
         
-        logger.debug(f"Комментариев: {total_comments}, негативных: {negative_count} ({negative_percentage:.1%}), "
-                    f"настроение поста: {dominant_sentiment}")
+        logger.debug(f"Comments: {total_comments}, negative: {negative_count} ({negative_percentage:.1%}), "
+                    f"post sentiment: {dominant_sentiment}")
         
         return post_sentiment, dominant_sentiment, is_negative
     
@@ -197,7 +177,7 @@ class SentimentAnalyzer:
         analyzed_messages = []
         
         for message in messages:
-            # Сначала анализируем комментарии
+            # Анализируем комментарии
             analyzed_comments = []
             for comment in message.get('comments', []):
                 comment_sentiment = self.analyze_sentiment(comment['text'])
@@ -226,9 +206,8 @@ class SentimentAnalyzer:
             
             analyzed_messages.append(analyzed_message)
             
-            # Логирование прогресса
             if len(analyzed_messages) % 10 == 0:
-                logger.info(f"Проанализированы настроения для {len(analyzed_messages)} сообщений")
+                logger.info(f"Analyzed sentiment for {len(analyzed_messages)} messages")
         
-        logger.info(f"Завершен анализ настроений для {len(analyzed_messages)} сообщений")
+        logger.info(f"Completed sentiment analysis for {len(analyzed_messages)} messages")
         return analyzed_messages 
