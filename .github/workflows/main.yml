@@ -44,7 +44,8 @@ jobs:
 
     - name: Test SSH Connection
       run: |
-        ssh -o StrictHostKeyChecking=no -v ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
+        echo "Testing SSH connection to ${{ secrets.HOST }}..."
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
 
     - name: Set up Python
       uses: actions/setup-python@v4
