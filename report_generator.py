@@ -1,4 +1,3 @@
-import logging
 import json
 import os
 import re
@@ -7,19 +6,15 @@ from datetime import datetime
 from config import Config
 from logging_config import setup_logger
 
-# Configure logging with file output
 logger = setup_logger(__name__)
 
 def clean_text_preview(text: str, max_length: int = 200) -> str:
-    """Clean and prettify text by removing newlines and normalizing whitespace"""
+    """Очищаем и форматируем текст, удаляя переносы строк и нормализуя пробелы"""
     if not text:
         return ""
     
-    # Replace newlines and carriage returns with spaces
     clean_text = text.replace('\n', ' ').replace('\r', ' ').strip()
-    # Remove multiple consecutive spaces
     clean_text = re.sub(r'\s+', ' ', clean_text)
-    # Truncate if needed
     return clean_text[:max_length] + '...' if len(clean_text) > max_length else clean_text
 
 
@@ -30,19 +25,18 @@ class ReportGenerator:
     
     def generate_multichannel_negative_posts_report(self, messages: List[Dict], max_posts: int = 100, output_dir: str = None) -> Dict:
         """
-        Generate report for negative posts grouped by channels.
+        Генерация отчета для негативных постов, сгруппированных по каналам.
         
         Args:
-            messages: List of analyzed messages with sentiment data (including channel info)
-            max_posts: Maximum number of posts to include per channel (default 100)
-            output_dir: Custom output directory (optional)
+            messages: Список аназированных сообщений с данными о настроении (включая информацию о канале)
+            max_posts: Максимальное количество постов на канал
+            output_dir: Пользовательская директория вывода (опционально)
             
         Returns:
-            Dict with paths to generated files and channel statistics
+            Словарь с путями к сгенерированным файлам и статистикой по каналам
         """
-        logger.info(f"Generating multichannel negative posts report for top {max_posts} posts per channel...")
+        logger.info(f"Generating report for negative posts, grouped by channels. Maximum number of posts per channel: {max_posts}")
         
-        # Group messages by channel
         channels_data = {}
         total_messages = 0
         total_negative = 0
@@ -63,7 +57,7 @@ class ReportGenerator:
             if msg.get('is_negative', False):
                 total_negative += 1
                 
-                # Format message for report
+                # Форматируем сообщение для отчета
                 comments = msg.get('comments', [])
                 total_comments = len(comments)
                 negative_comments = sum(1 for c in comments if c.get('is_negative', False))
@@ -92,19 +86,18 @@ class ReportGenerator:
                 
                 channels_data[channel]['negative_posts'].append(post_data)
         
-        # Sort negative posts by score within each channel and limit
+        # Сортируем негативные посты по оценке в каждом канале и ограничиваем количество
         for channel_info in channels_data.values():
             channel_info['negative_posts'].sort(key=lambda x: x['negative_score'], reverse=True)
             channel_info['negative_posts'] = channel_info['negative_posts'][:max_posts]
         
-        # Setup output directory
         if output_dir is None:
             report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_dir = os.path.join(self.output_dir, f"multichannel_negative_posts_{report_timestamp}")
         
         os.makedirs(output_dir, exist_ok=True)
         
-        # Generate JSON report with multichannel structure
+        # Генерируем JSON отчет с многоканальной структурой
         json_data = {
             'metadata': {
                 'timestamp': datetime.now().isoformat(),
@@ -117,7 +110,7 @@ class ReportGenerator:
             'channels': {}
         }
         
-        # Add channel data to JSON
+        # Добавляем данные канала в JSON
         for channel, channel_info in channels_data.items():
             negative_count = len(channel_info['negative_posts'])
             total_count = len(channel_info['messages'])
@@ -133,7 +126,7 @@ class ReportGenerator:
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
         
-        # Generate HTML report with dark theme
+        # Генерируем HTML отчет
         html_path = os.path.join(output_dir, "multichannel_negative_posts.html")
         html_content = self._create_multichannel_html_report(channels_data, total_messages, total_negative)
         
@@ -142,123 +135,24 @@ class ReportGenerator:
         
         result = {
             'output_dir': output_dir,
-            'json_path': json_path,
             'html_path': html_path,
             'posts_count': total_negative
         }
         
-        # Add multichannel data to result and fix key names for compatibility
+        # Добавляем данные канала в результат и исправляем имена ключей для совместимости
         result.update({
             'channels_data': channels_data,
             'total_messages': total_messages,
             'total_negative': total_negative,
-            'html_file': result.get('html_path'),  # Add html_file key for compatibility
-            'json_file': result.get('json_path')   # Add json_file key for compatibility
+            'html_file': result.get('html_path'),
         })
         
         return result
         
-    def generate_negative_posts_report(self, messages: List[Dict], max_posts: int = 100, output_dir: str = None) -> Dict:
-        """
-        Generate both HTML and JSON reports for negative posts.
-        
-        Args:
-            messages: List of analyzed messages with sentiment data
-            max_posts: Maximum number of posts to include (default 100)
-            output_dir: Custom output directory (optional)
-            
-        Returns:
-            Dict with paths to generated files
-        """
-        logger.info(f"Generating negative posts report for top {max_posts} posts...")
-        
-        # Extract negative posts and sort by negative sentiment score
-        negative_posts = []
-        
-        for msg in messages:
-            if msg.get('is_negative', False):
-                # Calculate negative comment percentage
-                comments = msg.get('comments', [])
-                total_comments = len(comments)
-                negative_comments = sum(1 for c in comments if c.get('is_negative', False))
-                negative_comment_percentage = (negative_comments / total_comments * 100) if total_comments > 0 else 0
-                
-                # Format date as string for JSON serialization
-                post_date = msg.get('date')
-                if hasattr(post_date, 'strftime'):
-                    formatted_date = post_date.strftime('%Y-%m-%d %H:%M:%S')
-                else:
-                    formatted_date = str(post_date)
-                
-                post_data = {
-                    'id': msg.get('id'),
-                    'date': formatted_date,
-                    'text': msg.get('text', ''),
-                    'negative_score': round(msg.get('sentiment', {}).get('negative', 0), 4),
-                    'total_comments': total_comments,
-                    'negative_comments': negative_comments,
-                    'negative_comment_percentage': round(negative_comment_percentage, 1),
-                    'views': msg.get('views', 0),
-                    'forwards': msg.get('forwards', 0),
-                    'replies': msg.get('replies', 0)
-                }
-                negative_posts.append(post_data)
-        
-        # Sort by negative sentiment score (highest first)
-        negative_posts.sort(key=lambda x: x['negative_score'], reverse=True)
-        
-        # Take only the top posts
-        top_negative_posts = negative_posts[:max_posts]
-        
-        # Setup output directory
-        if output_dir is None:
-            report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_dir = os.path.join(self.output_dir, f"negative_posts_{report_timestamp}")
-        
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Generate JSON report
-        json_data = {
-            'metadata': {
-                'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'total_posts_analyzed': len(messages),
-                'negative_posts_found': len(negative_posts),
-                'posts_in_report': len(top_negative_posts),
-                'max_posts_limit': max_posts,
-                'channel_username': Config.CHANNEL_USERNAME
-            },
-            'negative_posts': top_negative_posts
-        }
-        
-        json_path = os.path.join(output_dir, "negative_posts.json")
-        with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(json_data, f, indent=2, ensure_ascii=False)
-        
-        # Generate HTML report
-        html_path = os.path.join(output_dir, "negative_posts.html")
-        html_content = self._create_html_report(top_negative_posts)
-        
-        with open(html_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        
-        result = {
-            'output_dir': output_dir,
-            'json_path': json_path,
-            'html_path': html_path,
-            'posts_count': len(top_negative_posts)
-        }
-        
-        logger.info(f"Negative posts report generated:")
-        logger.info(f"  JSON: {json_path}")
-        logger.info(f"  HTML: {html_path}")
-        logger.info(f"  Posts: {len(top_negative_posts)}")
-        
-        return result
-    
     def _create_html_report(self, negative_posts: List[Dict]) -> str:
-        """Create simple HTML template for negative posts report"""
+        """Создаем простой HTML шаблон для отчета о негативных постах"""
         
-        # Get channel username from config for link generation
+        # Получаем имя канала из конфига для генерации ссылки
         channel_username = Config.CHANNEL_USERNAME.replace('@', '') if Config.CHANNEL_USERNAME.startswith('@') else Config.CHANNEL_USERNAME
         
         html = f"""<!DOCTYPE html>
@@ -452,7 +346,7 @@ class ReportGenerator:
         return html
     
     def _create_multichannel_html_report(self, channels_data: Dict, total_messages: int, total_negative: int) -> str:
-        """Create dark-themed HTML template for multichannel negative posts report matching Telegram style"""
+        """Создаем HTML шаблон для отчета о негативных постах, сгруппированных по каналам, соответствующий стилю Telegram"""
         
         negative_percentage = round((total_negative / total_messages * 100) if total_messages > 0 else 0, 1)
         
@@ -626,7 +520,7 @@ class ReportGenerator:
         </div>
             """
         else:
-            # Group by channel
+            # Группируем по каналам
             for channel, channel_info in channels_data.items():
                 if not channel_info['negative_posts']:
                     continue
@@ -643,19 +537,19 @@ class ReportGenerator:
             </div>
 """
                 
-                # Add posts for this channel
+                # Добавляем посты для этого канала
                 for i, post in enumerate(channel_info['negative_posts'], 1):
-                    # Format date
+                    # Форматируем дату
                     formatted_date = post['date']
                     
                     # Generate Telegram link
                     channel_username = channel.replace('@', '') if channel.startswith('@') else channel
                     post_link = f"https://t.me/{channel_username}/{post['id']}"
                     
-                    # Clean and truncate long text for preview
+                    # Очищаем и обрезаем длинный текст для предварительного просмотра
                     text_preview = clean_text_preview(post['text'], 200)
                     
-                    # Calculate percentage display
+                    # Рассчитываем процент отображения
                     comment_percentage = f"{post['negative_comment_percentage']:.1f}%" if post['total_comments'] > 0 else "0.0%"
                     
                     html += f"""

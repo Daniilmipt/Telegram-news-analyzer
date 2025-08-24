@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Log utilities for News Analyzer project
-"""
-
 import os
 import sys
 import glob
@@ -12,38 +6,38 @@ from logging_config import LoggingConfig
 
 
 def show_log_status():
-    """Display current log files status"""
-    print("📊 News Analyzer - Log Files Status")
+    """Отобразить статус логов"""
+    print("📊 Статус файлов логов")
     print("=" * 50)
     
     info = LoggingConfig.get_log_files_info()
     
     for log_name, details in info.items():
         print("\n📝 {}:".format(log_name.replace('_', ' ').title()))
-        print("   Path: {}".format(details['path']))
-        print("   Size: {} MB".format(details['size_mb']))
-        print("   Last Modified: {}".format(details['modified']))
+        print("   Путь: {}".format(details['path']))
+        print("   Размер: {} MB".format(details['size_mb']))
+        print("   Последнее изменение: {}".format(details['modified']))
     
-    print("\n📁 Log Directory: {}".format(LoggingConfig.LOG_DIR))
-    print("   Directory exists: {}".format(os.path.exists(LoggingConfig.LOG_DIR)))
+    print("\n📁 Директория логов: {}".format(LoggingConfig.LOG_DIR))
+    print("   Директория существует: {}".format(os.path.exists(LoggingConfig.LOG_DIR)))
     
     if os.path.exists(LoggingConfig.LOG_DIR):
         log_files = glob.glob(os.path.join(LoggingConfig.LOG_DIR, "*.log*"))
-        print("   Total log files: {}".format(len(log_files)))
+        print("   Всего файлов лога: {}".format(len(log_files)))
         
         total_size = sum(os.path.getsize(f) for f in log_files if os.path.isfile(f))
-        print("   Total size: {:.2f} MB".format(total_size / (1024*1024)))
+        print("   Общий размер: {:.2f} MB".format(total_size / (1024*1024)))
 
 
 def tail_log(lines=20):
-    """Show last N lines of the log file"""
+    """Показать последние N строк лога"""
     log_file = LoggingConfig.LOG_FILE
     
     if not os.path.exists(log_file):
-        print("❌ Log file does not exist: {}".format(log_file))
+        print("❌ Файл лога не существует: {}".format(log_file))
         return
     
-    print("📄 Last {} lines of news_analyzer log:".format(lines))
+    print("📄 Последние {} строк лога:".format(lines))
     print("=" * 60)
     
     try:
@@ -56,11 +50,11 @@ def tail_log(lines=20):
                 print(line.rstrip())
                 
     except Exception as e:
-        print("❌ Error reading log file: {}".format(e))
+        print("❌ Ошибка чтения файла лога: {}".format(e))
 
 
 def clear_logs():
-    """Clear the log file"""
+    """Очистить файл лога"""
     log_file = LoggingConfig.LOG_FILE
     
     cleared_count = 0
@@ -68,10 +62,10 @@ def clear_logs():
     if os.path.exists(log_file):
         try:
             os.remove(log_file)
-            print("✅ Cleared: {}".format(os.path.basename(log_file)))
+            print("✅ Очищено: {}".format(os.path.basename(log_file)))
             cleared_count += 1
         except Exception as e:
-            print("❌ Error clearing {}: {}".format(os.path.basename(log_file), e))
+            print("❌ Ошибка очистки {}: {}".format(os.path.basename(log_file), e))
     
     # Clear rotated log files
     if os.path.exists(LoggingConfig.LOG_DIR):
@@ -79,23 +73,23 @@ def clear_logs():
         for rot_file in rotated_files:
             try:
                 os.remove(rot_file)
-                print("✅ Cleared rotated: {}".format(os.path.basename(rot_file)))
+                print("✅ Очищено: {}".format(os.path.basename(rot_file)))
                 cleared_count += 1
             except Exception as e:
-                print("❌ Error clearing {}: {}".format(os.path.basename(rot_file), e))
+                print("❌ Ошибка очистки {}: {}".format(os.path.basename(rot_file), e))
     
-    print("\n📊 Total files cleared: {}".format(cleared_count))
+    print("\n📊 Всего очищено: {}".format(cleared_count))
 
 
 def main():
-    """Main CLI interface"""
+    """Основной CLI интерфейс"""
     if len(sys.argv) < 2:
-        print("📝 News Analyzer - Log Utilities")
-        print("\nUsage:")
-        print("  python log_utils.py status         - Show log file status")
-        print("  python log_utils.py tail [lines]   - Show last lines of log")
-        print("  python log_utils.py clear          - Clear log file")
-        print("\nExample: python log_utils.py tail 50")
+        print("📝 News Analyzer - Утилиты для работы с логами")
+        print("\nКоманды:")
+        print("  python log_utils.py status         - Показать статус файла лога")
+        print("  python log_utils.py tail N   - Показать последние N строк лога")
+        print("  python log_utils.py clear          - Очистить файл лога")
+        print("\nПример: python log_utils.py tail 50")
         return
     
     command = sys.argv[1].lower()
@@ -108,14 +102,14 @@ def main():
         tail_log(lines)
         
     elif command == "clear":
-        confirm = input("⚠️  Are you sure you want to clear the log file? (y/N): ")
+        confirm = input("⚠️  Вы уверены, что хотите очистить файл лога? (y/N): ")
         if confirm.lower() == 'y':
             clear_logs()
         else:
-            print("❌ Operation cancelled")
+            print("❌ Операция отменена")
             
     else:
-        print("❌ Unknown command: {}".format(command))
+        print("❌ Неизвестная команда: {}".format(command))
 
 
 if __name__ == "__main__":
