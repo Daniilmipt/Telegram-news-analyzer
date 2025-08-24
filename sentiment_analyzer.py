@@ -17,7 +17,7 @@ class SentimentAnalyzer:
         self.initialize_models()
     
     def initialize_models(self):
-        """Инициализация моделей анализа настроений"""
+        """Initialize sentiment analysis models"""
         try:
             # Использование многоязычной модели настроений для лучших результатов
             model_name = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
@@ -33,10 +33,10 @@ class SentimentAnalyzer:
                 device=0 if self.device == "cuda" else -1,
                 return_all_scores=True
             )
-            logger.info(f"Инициализирована модель настроений на {self.device}")
+            logger.info(f"Initialized sentiment model on {self.device}")
         except Exception as e:
-            logger.warning(f"Не удалось загрузить трансформер модель: {e}")
-            logger.info("Переход на TextBlob для анализа настроений")
+            logger.warning(f"Failed to load transformer model: {e}")
+            logger.info("Falling back to TextBlob for sentiment analysis")
             self.sentiment_pipeline = None
     
     def clean_text(self, text: str) -> str:
@@ -94,7 +94,7 @@ class SentimentAnalyzer:
                 return {'positive': 0.0, 'negative': 0.0, 'neutral': 1.0}
                 
         except Exception as e:
-            logger.error(f"Ошибка в анализе настроений TextBlob: {e}")
+            logger.error(f"Error in TextBlob sentiment analysis: {e}")
             return {'positive': 0.0, 'negative': 0.0, 'neutral': 1.0}
     
     def analyze_sentiment(self, text: str) -> Dict[str, float]:
@@ -184,8 +184,8 @@ class SentimentAnalyzer:
             dominant_sentiment = self.get_dominant_sentiment(post_sentiment)
             is_negative = self.is_negative(post_sentiment)
         
-        logger.debug(f"Комментариев: {total_comments}, негативных: {negative_count} ({negative_percentage:.1%}), "
-                    f"настроение поста: {dominant_sentiment}")
+        logger.debug(f"Comments: {total_comments}, negative: {negative_count} ({negative_percentage:.1%}), "
+                    f"post sentiment: {dominant_sentiment}")
         
         return post_sentiment, dominant_sentiment, is_negative
     
@@ -228,7 +228,7 @@ class SentimentAnalyzer:
             
             # Логирование прогресса
             if len(analyzed_messages) % 10 == 0:
-                logger.info(f"Проанализированы настроения для {len(analyzed_messages)} сообщений")
+                logger.info(f"Analyzed sentiment for {len(analyzed_messages)} messages")
         
-        logger.info(f"Завершен анализ настроений для {len(analyzed_messages)} сообщений")
+        logger.info(f"Completed sentiment analysis for {len(analyzed_messages)} messages")
         return analyzed_messages 

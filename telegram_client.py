@@ -24,7 +24,7 @@ class TelegramNewsClient:
         """Подключение к Telegram и аутентификация"""
         try:
             await self.client.start(phone=Config.TELEGRAM_PHONE)
-            logger.info("Успешно подключено к Telegram")
+            logger.info("Successfully connected to Telegram")
             
             # Получение списка каналов
             if channels is None:
@@ -35,18 +35,18 @@ class TelegramNewsClient:
                 try:
                     entity = await self.client.get_entity(channel_username)
                     self.channel_entities[channel_username] = entity
-                    logger.info("Подключено к каналу: {} ({})".format(channel_username, entity.title))
+                    logger.info("Connected to channel: {} ({})".format(channel_username, entity.title))
                 except Exception as e:
-                    logger.error("Не удалось подключиться к каналу {}: {}".format(channel_username, e))
+                    logger.error("Failed to connect to channel {}: {}".format(channel_username, e))
             
             if not self.channel_entities:
                 raise ValueError("Не удалось подключиться ни к одному каналу")
                 
         except SessionPasswordNeededError:
-            logger.error("Требуется двухфакторная аутентификация. Пожалуйста, настройте пароль приложения.")
+            logger.error("Two-factor authentication required. Please configure app password.")
             raise
         except Exception as e:
-            logger.error("Не удалось подключиться к Telegram: {}".format(e))
+            logger.error("Failed to connect to Telegram: {}".format(e))
             raise
     
     async def get_recent_messages_from_all_channels(self, limit: int = None, days_back: int = 1) -> Dict[str, List[Dict]]:
@@ -58,7 +58,7 @@ class TelegramNewsClient:
         results = {}
         
         for channel_username, channel_entity in self.channel_entities.items():
-            logger.info("Получение сообщений из канала: {}".format(channel_username))
+            logger.info("Fetching messages from channel: {}".format(channel_username))
             messages_data = []
             
             try:
@@ -108,14 +108,14 @@ class TelegramNewsClient:
                     await asyncio.sleep(0.1)
                     
             except FloodWaitError as e:
-                logger.warning("Ограничение скорости для {}: ожидание {} секунд...".format(channel_username, e.seconds))
+                logger.warning("Rate limit for {}: waiting {} seconds...".format(channel_username, e.seconds))
                 await asyncio.sleep(e.seconds)
             except Exception as e:
-                logger.error("Ошибка при получении сообщений из {}: {}".format(channel_username, e))
+                logger.error("Error fetching messages from {}: {}".format(channel_username, e))
                 messages_data = []
             
             results[channel_username] = messages_data
-            logger.info("Получено {} сообщений из {}".format(len(messages_data), channel_username))
+            logger.info("Fetched {} messages from {}".format(len(messages_data), channel_username))
         
         return results
     
@@ -174,13 +174,13 @@ class TelegramNewsClient:
                 await asyncio.sleep(0.5)
                 
         except FloodWaitError as e:
-            logger.warning("Ограничение скорости. Ожидание {} секунд...".format(e.seconds))
+            logger.warning("Rate limit. Waiting {} seconds...".format(e.seconds))
             await asyncio.sleep(e.seconds)
         except Exception as e:
-            logger.error("Ошибка при получении сообщений: {}".format(e))
+            logger.error("Error fetching messages: {}".format(e))
             raise
         
-        logger.info("Получено {} сообщений из {}".format(len(messages_data), channel_username))
+        logger.info("Fetched {} messages from {}".format(len(messages_data), channel_username))
         return messages_data
     
     async def get_messages_by_date_range(self, start_date: datetime, end_date: datetime, channel_username: str = None) -> List[Dict]:
@@ -213,7 +213,7 @@ class TelegramNewsClient:
             start_datetime = start_naive.replace(hour=0, minute=0, second=0, microsecond=0)
             end_datetime = end_naive.replace(hour=23, minute=59, second=59, microsecond=999999)
             
-            logger.info(f"Получение сообщений с {start_datetime} по {end_datetime}")
+            logger.info(f"Fetching messages from {start_datetime} to {end_datetime}")
             
             async for message in self.client.iter_messages(
                 channel_entity,
@@ -268,16 +268,16 @@ class TelegramNewsClient:
                 await asyncio.sleep(0.5)
                 
         except FloodWaitError as e:
-            logger.warning(f"Ограничение скорости. Ожидание {e.seconds} секунд...")
+            logger.warning(f"Rate limit. Waiting {e.seconds} seconds...")
             await asyncio.sleep(e.seconds)
         except Exception as e:
-            logger.error(f"Ошибка при получении сообщений по датам: {e}")
+            logger.error(f"Error fetching messages by date range: {e}")
             raise
         
         # Сортируем сообщения по дате (от новых к старым)
         messages_data.sort(key=lambda x: x['date'], reverse=True)
         
-        logger.info(f"Получено {len(messages_data)} сообщений за период с {start_date.date()} по {end_date.date()}")
+        logger.info(f"Fetched {len(messages_data)} messages for period from {start_date.date()} to {end_date.date()}")
         return messages_data
     
     async def get_message_comments(self, message_id: int, channel_entity=None, limit: int = 50) -> List[Dict]:
@@ -329,14 +329,14 @@ class TelegramNewsClient:
                 comments.append(comment_data)
                 
         except Exception as e:
-            logger.error(f"Ошибка при получении комментариев для сообщения {message_id}: {e}")
+            logger.error(f"Error fetching comments for message {message_id}: {e}")
         
         return comments
     
     async def disconnect(self):
         """Отключение от Telegram"""
         await self.client.disconnect()
-        logger.info("Отключено от Telegram")
+        logger.info("Disconnected from Telegram")
     
     async def __aenter__(self):
         await self.connect()

@@ -275,7 +275,6 @@ class NegativePostsBot:
 📊 **Статус бота**
 
 **Конфигурация:**
-• Канал: `{Config.CHANNEL_USERNAME}`
 • Порог негативности: {Config.NEGATIVE_COMMENT_THRESHOLD * 100}%
 
 **Мониторинг:**
@@ -1297,7 +1296,7 @@ class NegativePostsBot:
     
     def run(self):
         """Start the bot"""
-        logger.info("Анализ негативных постов")
+        logger.info("Negative posts analysis")
         self.app.run_polling()
 
 def main():

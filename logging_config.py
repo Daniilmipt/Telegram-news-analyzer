@@ -9,7 +9,7 @@ from datetime import datetime
 
 
 class LoggingConfig:
-    """Centralized logging configuration class"""
+    """Centralized logging configuration class - captures all log levels by default"""
     
     # Log directory
     LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
@@ -21,12 +21,8 @@ class LoggingConfig:
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
     
-    # Log levels
-    DEFAULT_LEVEL = logging.INFO
-    
     @classmethod
-    def setup_logging(cls, logger_name=None, log_to_file=True, 
-                     log_to_console=True, log_level=None):
+    def setup_logging(cls, logger_name=None, log_to_file=True, log_to_console=True):
         """
         Setup centralized logging configuration
         
@@ -34,7 +30,6 @@ class LoggingConfig:
             logger_name: Name of the logger (uses root logger if None)
             log_to_file: Whether to log to file
             log_to_console: Whether to log to console
-            log_level: Logging level (uses DEFAULT_LEVEL if None)
         
         Returns:
             Configured logger instance
@@ -49,9 +44,8 @@ class LoggingConfig:
         # Clear existing handlers to avoid duplicates
         logger.handlers = []
         
-        # Set log level
-        level = log_level or cls.DEFAULT_LEVEL
-        logger.setLevel(level)
+        # Set logger to capture all levels
+        logger.setLevel(logging.DEBUG)
         
         # Create formatter
         formatter = logging.Formatter(cls.LOG_FORMAT, cls.DATE_FORMAT)
@@ -64,14 +58,12 @@ class LoggingConfig:
                 maxBytes=10*1024*1024,  # 10MB
                 backupCount=5
             )
-            file_handler.setLevel(level)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         
         # Add console handler
         if log_to_console:
             console_handler = logging.StreamHandler()
-            console_handler.setLevel(level)
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
         
@@ -81,12 +73,9 @@ class LoggingConfig:
         return logger
     
     @classmethod
-    def setup_bot_logging(cls, log_level=None):
+    def setup_bot_logging(cls):
         """
         Setup specialized logging for Telegram bot
-        
-        Args:
-            log_level: Logging level (uses DEFAULT_LEVEL if None)
         
         Returns:
             Configured logger instance for bot
@@ -101,9 +90,8 @@ class LoggingConfig:
         # Clear existing handlers
         logger.handlers = []
         
-        # Set log level
-        level = log_level or cls.DEFAULT_LEVEL
-        logger.setLevel(level)
+        # Set logger to capture all levels
+        logger.setLevel(logging.DEBUG)
         
         # Create formatter
         formatter = logging.Formatter(cls.LOG_FORMAT, cls.DATE_FORMAT)
@@ -114,13 +102,11 @@ class LoggingConfig:
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
-        file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
         
         # Console output for bot
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
         
@@ -162,14 +148,12 @@ class LoggingConfig:
 
 
 # Convenience function for quick setup
-def setup_logger(name=None, level=logging.INFO, 
-                file_logging=True, console_logging=True):
+def setup_logger(name=None, file_logging=True, console_logging=True):
     """
     Quick setup function for logger
     
     Args:
         name: Logger name
-        level: Log level
         file_logging: Enable file logging
         console_logging: Enable console logging
     
@@ -179,6 +163,5 @@ def setup_logger(name=None, level=logging.INFO,
     return LoggingConfig.setup_logging(
         logger_name=name,
         log_to_file=file_logging,
-        log_to_console=console_logging,
-        log_level=level
+        log_to_console=console_logging
     )
