@@ -15,16 +15,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Debug SSH Key
+    - name: Debug Secrets
       run: |
-        echo "${{ secrets.PRIVATE_KEY }}" > ~/.ssh/deploy_key
-        chmod 600 ~/.ssh/deploy_key
-        echo "Key content (first few lines):"
-        head -5 ~/.ssh/deploy_key
-        echo "Key file info:"
-        ls -la ~/.ssh/deploy_key
-        echo "Testing key format:"
-        ssh-keygen -l -f ~/.ssh/deploy_key || echo "Key format check failed"
+        echo "Checking if secrets are available..."
+        if [ -z "${{ secrets.PRIVATE_KEY }}" ]; then
+          echo "ERROR: PRIVATE_KEY secret is empty or not set"
+          exit 1
+        else
+          echo "PRIVATE_KEY secret is available (length: $(echo '${{ secrets.PRIVATE_KEY }}' | wc -c))"
+        fi
+        
+        if [ -z "${{ secrets.HOST }}" ]; then
+          echo "ERROR: HOST secret is empty or not set"
+        else
+          echo "HOST secret is available"
+        fi
+        
+        if [ -z "${{ secrets.USERNAME }}" ]; then
+          echo "ERROR: USERNAME secret is empty or not set"
+        else
+          echo "USERNAME secret is available"
+        fi
 
     - name: Setup SSH Agent
       uses: webfactory/ssh-agent@v0.8.0
