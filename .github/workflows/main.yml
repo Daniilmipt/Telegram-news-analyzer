@@ -15,38 +15,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Debug Secrets
-      run: |
-        echo "Checking if secrets are available..."
-        if [ -z "${{ secrets.PRIVATE_KEY }}" ]; then
-          echo "ERROR: PRIVATE_KEY secret is empty or not set"
-          exit 1
-        else
-          echo "PRIVATE_KEY secret is available (length: $(echo '${{ secrets.PRIVATE_KEY }}' | wc -c))"
-        fi
-        
-        if [ -z "${{ secrets.HOST }}" ]; then
-          echo "ERROR: HOST secret is empty or not set"
-        else
-          echo "HOST secret is available"
-        fi
-        
-        if [ -z "${{ secrets.USERNAME }}" ]; then
-          echo "ERROR: USERNAME secret is empty or not set"
-        else
-          echo "USERNAME secret is available"
-        fi
-
-    - name: Setup SSH Agent
-      uses: webfactory/ssh-agent@v0.8.0
-      with:
-        ssh-private-key: ${{ secrets.PRIVATE_KEY }}
-
-    # - name: Test SSH Connection
-    #   run: |
-    #     echo "Testing SSH connection to ${{ secrets.HOST }}..."
-    #     ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
-
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
