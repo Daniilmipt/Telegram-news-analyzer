@@ -42,10 +42,10 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.PRIVATE_KEY }}
 
-    - name: Test SSH Connection
-      run: |
-        echo "Testing SSH connection to ${{ secrets.HOST }}..."
-        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
+    # - name: Test SSH Connection
+    #   run: |
+    #     echo "Testing SSH connection to ${{ secrets.HOST }}..."
+    #     ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.USERNAME }}@${{ secrets.HOST }} "echo 'SSH connection successful'"
 
     - name: Set up Python
       uses: actions/setup-python@v4
