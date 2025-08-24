@@ -44,17 +44,8 @@ jobs:
           pip install -r requirements.txt
           
           # Restart your bot service
-          pkill -f "python main.py" || true
-          sleep 3  # Give time for clean shutdown
-
-          # Start the bot in background with logging
-          nohup python main.py > app.log 2>&1 &
-
-          # Verify it's running
-          sleep 2
-          if pgrep -f "python main.py" > /dev/null; then
-              echo "✅ Bot started successfully"
-          else
-              echo "❌ Failed to start bot"
-              exit 1
-          fi
+          sudo systemctl restart telegram-bot
+          
+          # Check if the service is running properly
+          sleep 5
+          sudo systemctl status telegram-bot
