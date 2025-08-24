@@ -16,10 +16,5 @@ CHANNELS_LIST=@yourchannel,@anotherchannel,@thirdchannel
 NEGATIVE_COMMENT_THRESHOLD=0.3
 OUTPUT_DIR=output 
 
-# Logging settings
-LOG_DIR=logs
-LOG_TO_FILE=true
-LOG_TO_CONSOLE=true
-
 # Max messages to analyze
 MAX_MESSAGES=200
