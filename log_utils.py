@@ -42,7 +42,6 @@ def tail_log(lines=20):
     
     try:
         with open(log_file, 'r') as f:
-            # Read all lines and get the last N
             all_lines = f.readlines()
             last_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
             

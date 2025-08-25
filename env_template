@@ -9,7 +9,6 @@ TELEGRAM_PHONE=+1234567890
 BOT_TOKEN=your_bot_token_here
 
 # Channels to analyze
-CHANNEL_USERNAME=@yourchannel
 CHANNELS_LIST=@yourchannel,@anotherchannel,@thirdchannel
 
 # Analysis settings

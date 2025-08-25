@@ -136,24 +136,19 @@ class ReportGenerator:
         result = {
             'output_dir': output_dir,
             'html_path': html_path,
-            'posts_count': total_negative
-        }
-        
-        # Добавляем данные канала в результат и исправляем имена ключей для совместимости
-        result.update({
+            'posts_count': total_negative,
+            'json_path': json_path,
             'channels_data': channels_data,
             'total_messages': total_messages,
             'total_negative': total_negative,
-            'html_file': result.get('html_path'),
-        })
-        
+        }
         return result
         
     def _create_html_report(self, negative_posts: List[Dict]) -> str:
         """Создаем простой HTML шаблон для отчета о негативных постах"""
         
         # Получаем имя канала из конфига для генерации ссылки
-        channel_username = Config.CHANNEL_USERNAME.replace('@', '') if Config.CHANNEL_USERNAME.startswith('@') else Config.CHANNEL_USERNAME
+        channel_username = ""
         
         html = f"""<!DOCTYPE html>
         <html lang="ru">

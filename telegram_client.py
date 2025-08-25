@@ -1,6 +1,6 @@
 import asyncio
 from typing import List, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from telethon import TelegramClient
 from telethon.tl.types import MessageService
 from telethon.errors import SessionPasswordNeededError, FloodWaitError
@@ -81,10 +81,25 @@ class TelegramNewsClient:
                         message_text = message.message
                     elif message.media and hasattr(message.media, 'caption') and message.media.caption:
                         message_text = message.media.caption # TODO: add media text
+                    else:
+                        continue
+                    
+                    # Convert message.date to datetime with local timezone
+                    message_date = message.date
+                    if message_date:
+                        # If message.date is timezone-aware, convert to local timezone
+                        if message_date.tzinfo is not None:
+                            # Convert to local timezone (UTC+3 for Moscow time)
+                            local_tz = timezone(timedelta(hours=3))  # Moscow timezone
+                            message_date = message_date.astimezone(local_tz)
+                        else:
+                            # If no timezone info, assume UTC and convert to local
+                            local_tz = timezone(timedelta(hours=3))  # Moscow timezone
+                            message_date = message_date.replace(tzinfo=timezone.utc).astimezone(local_tz)
                     
                     message_data = {
                         'id': message.id,
-                        'date': message.date,
+                        'date': message_date,
                         'text': message_text,
                         'views': getattr(message, 'views', 0),
                         'forwards': getattr(message, 'forwards', 0),
@@ -155,9 +170,22 @@ class TelegramNewsClient:
                 elif comment.media and hasattr(comment.media, 'caption') and comment.media.caption:
                     comment_text = comment.media.caption # TODO: add media text
                 
+                # Convert comment date to local timezone
+                comment_date = comment.date
+                if comment_date:
+                    # If comment.date is timezone-aware, convert to local timezone
+                    if comment_date.tzinfo is not None:
+                        # Convert to local timezone (UTC+3 for Moscow time)
+                        local_tz = timezone(timedelta(hours=3))  # Moscow timezone
+                        comment_date = comment_date.astimezone(local_tz)
+                    else:
+                        # If no timezone info, assume UTC and convert to local
+                        local_tz = timezone(timedelta(hours=3))  # Moscow timezone
+                        comment_date = comment_date.replace(tzinfo=timezone.utc).astimezone(local_tz)
+                
                 comment_data = {
                     'id': comment.id,
-                    'date': comment.date,
+                    'date': comment_date,
                     'text': comment_text,
                     'user_id': user_id,
                     'reply_to': comment.reply_to.reply_to_msg_id if comment.reply_to else None

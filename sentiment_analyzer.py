@@ -200,8 +200,6 @@ class SentimentAnalyzer:
                 'dominant_sentiment': dominant_sentiment,
                 'is_negative': is_negative,
                 'comments': analyzed_comments,
-                # Сохраняем информацию о том, как было определено настроение
-                'sentiment_source': 'comments' if analyzed_comments else 'neutral_default'
             }
             
             analyzed_messages.append(analyzed_message)

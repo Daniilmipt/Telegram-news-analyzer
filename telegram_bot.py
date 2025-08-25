@@ -61,8 +61,6 @@ class NegativePostsBot:
         self.app.add_handler(CommandHandler("start", self.start_command))
         self.app.add_handler(CommandHandler("help", self.help_command))
         self.app.add_handler(CommandHandler("analyze", self.analyze_command))
-        self.app.add_handler(CommandHandler("monitor", self.monitor_command))
-        self.app.add_handler(CommandHandler("stop", self.stop_monitor_command))
         self.app.add_handler(CommandHandler("status", self.status_command))
         self.app.add_handler(CallbackQueryHandler(self.button_callback))
     
@@ -161,11 +159,11 @@ class NegativePostsBot:
 - остановка мониторинга командой /stop
 
 **Конфигурация:**
-- Канал: `{channel}`
+- Каналы: `{channel}`
 - Порог негативности: {threshold}%
 - мониторинг: каждые 5 минут
         """.format(
-            channel=Config.CHANNEL_USERNAME,
+            channel=Config.get_channels_list(),
             threshold=Config.NEGATIVE_COMMENT_THRESHOLD * 100
         )
     
@@ -188,64 +186,6 @@ class NegativePostsBot:
             return
             
         await self._show_date_selection_menu(chat_id, context)
-    
-    async def monitor_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Обработка команды /monitor - запуск реального времени мониторинга"""
-        chat_id = update.effective_chat.id
-        
-        # Предотвращение дублирования команды /monitor
-        if self._is_duplicate_command(chat_id, "monitor"):
-            return
-            
-        if self.monitoring_active:
-            await update.message.reply_text("🔄 Мониторинг уже активен!")
-            return
-        
-        self.monitoring_active = True
-        self.monitoring_chat_id = update.effective_chat.id
-        
-        # Запланировать задачу мониторинга
-        context.job_queue.run_repeating(
-            self._monitor_callback,
-            interval=300,  # 5 minutes
-            first=10,      # Start in 10 seconds
-            data=update.effective_chat.id,
-            name=f"monitor_{update.effective_chat.id}"
-        )
-        
-        # Получаем список каналов для отображения
-        channels_list = Config.get_channels_list()
-        channels_text = "\n".join([f"  • `{channel}`" for channel in channels_list])
-        
-        await update.message.reply_text(
-            f"🔄 **Мониторинг запущен!**\n\n"
-            f"• Проверка каждые 5 минут\n"
-            f"• Каналы:\n{channels_text}\n"
-            f"• Используйте /stop для остановки мониторинга",
-            parse_mode=ParseMode.MARKDOWN
-        )
-    
-    async def stop_monitor_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Обработка команды /stop - остановка мониторинга"""
-        chat_id = update.effective_chat.id
-        
-        # Предотвращение дублирования команды /stop
-        if self._is_duplicate_command(chat_id, "stop"):
-            return
-        
-        if not self.monitoring_active:
-            await update.message.reply_text("❌ Мониторинг не активен")
-            return
-        
-        # Удаляем задачу
-        current_jobs = context.job_queue.get_jobs_by_name(f"monitor_{chat_id}")
-        for job in current_jobs:
-            job.schedule_removal()
-        
-        self.monitoring_active = False
-        self.monitoring_chat_id = None
-        
-        await update.message.reply_text("⏹️ Мониторинг остановлен")
     
     async def status_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработка команды /status"""
@@ -340,45 +280,6 @@ class NegativePostsBot:
             # Завершаем выбор канала
             await self._finish_channel_selection(query.message.chat_id, context)
         
-        elif query.data == "start_monitor":
-            if self.monitoring_active:
-                await context.bot.send_message(
-                    chat_id=query.message.chat_id,
-                    text="🔄 Мониторинг уже активен!"
-                )
-                return
-            
-            # Отправляем сообщение о прогрессе
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text="🔄 Запускаем мониторинг..."
-            )
-            
-            self.monitoring_active = True
-            self.monitoring_chat_id = query.message.chat_id
-            
-            # Запланировать задачу мониторинга
-            context.job_queue.run_repeating(
-                self._monitor_callback,
-                interval=300,  # 5 minutes
-                first=10,      # Start in 10 seconds
-                data=query.message.chat_id,
-                name=f"monitor_{query.message.chat_id}"
-            )
-            
-            # Получаем список каналов для отображения
-            channels_list = Config.get_channels_list()
-            channels_text = "\n".join([f"  • `{channel}`" for channel in channels_list])
-            
-            await context.bot.send_message(
-                chat_id=query.message.chat_id,
-                text=f"🔄 **Мониторинг запущен!**\n\n"
-                     f"• Периодичность каждые 5 минут\n"
-                     f"• Каналы:\n{channels_text}\n"
-                     f"• Используйте /stop для остановки мониторинга",
-                parse_mode=ParseMode.MARKDOWN
-            )
-        
         elif query.data == "help":
             # Отправляем справку как новое сообщение
             await context.bot.send_message(
@@ -399,7 +300,7 @@ class NegativePostsBot:
                             chat_id=query.message.chat_id,
                             document=f,
                             filename=os.path.basename(html_path),
-                            caption="📊 HTML-отчет - Скачайте и откройте в вашем браузере"
+                            caption="📊 Скачайте и откройте в вашем браузере"
                         )
                 else:
                     await context.bot.send_message(
@@ -838,13 +739,8 @@ class NegativePostsBot:
             summary_text = """
 📋 **Детализация по каналам:**
 
-{}
-
-📁 **Созданные файлы:**
-• HTML-отчет: `{}`
-            """.format(
+{}""".format(
                 "\n".join(channels_summary),
-                os.path.basename(report_result.get('html_file', report_result.get('html_path', 'unknown'))),
             )
             
             # Отправляем подробную сводку с кнопкой HTML
@@ -854,7 +750,7 @@ class NegativePostsBot:
                 reply_markup=reply_markup,
                 parse_mode=ParseMode.MARKDOWN
             )
-            
+
             # Отправляем форматированные данные JSON как текстовое сообщение
             json_file_path = report_result.get('json_file', report_result.get('json_path'))
             if json_file_path:
@@ -867,75 +763,6 @@ class NegativePostsBot:
                 text=f"❌ **Анализ не удался:** {str(e)}",
                 parse_mode=ParseMode.MARKDOWN
             )
-    
-    async def _monitor_callback(self, context: ContextTypes.DEFAULT_TYPE):
-        """Мониторинг"""
-        if not self.monitoring_active or not self.monitoring_chat_id:
-            return
-        
-        try:
-            logger.info("Running monitoring check...")
-            
-            # Получаем только последние сообщения из всех каналов (последние 10 минут)
-            async with TelegramNewsClient() as client:
-                all_messages_by_channel = await client.get_recent_messages_from_all_channels(limit=5, days_back=1)
-                
-                # Преобразуем сообщения из всех каналов в один список
-                messages = []
-                for channel, channel_messages in all_messages_by_channel.items():
-                    messages.extend(channel_messages)
-            
-            # Фильтруем сообщения из последних 60 минут, чтобы поймать новые
-            now = datetime.now()
-            cutoff_time = now - timedelta(minutes=60)
-            print(f"Cutoff time: {cutoff_time}")
-            
-            recent_messages = []
-            for msg in messages:
-                print(f"Message ID: {msg.get('id', 'Unknown')}")
-                msg_date = msg.get('date')
-                if hasattr(msg_date, 'replace'):
-                    # Удаляем информацию о часовом поясе
-                    msg_date = msg_date.replace(tzinfo=None)
-
-                    print(f"Message date: {msg_date}")
-                    if msg_date >= cutoff_time:
-                        recent_messages.append(msg)
-            
-            if not recent_messages:
-                logger.info("No recent messages found")
-                return
-            
-            # Анализируем последние сообщения
-            analyzed_messages = self.sentiment_analyzer.analyze_messages_sentiment(recent_messages)
-
-            # Находим новые негативные сообщения
-            new_negative_messages = []
-            for msg in analyzed_messages:
-                if msg.get('is_negative', False) and msg['id'] not in self.sent_message_ids:
-                    new_negative_messages.append(msg)
-                    self.sent_message_ids.add(msg['id'])
-            
-            if new_negative_messages:
-                # Сохраняем обновленные отправленные сообщения
-                self._save_sent_messages()
-                
-                # Отправляем уведомления о новых негативных постах
-                for msg in new_negative_messages:
-                    await self._send_negative_post_alert(msg)
-                
-                logger.info(f"Sent {len(new_negative_messages)} negative post alerts")
-            else:
-                logger.info("No new negative posts found")
-        
-        except Exception as e:
-            logger.error(f"Monitoring error: {e}")
-            if self.monitoring_chat_id:
-                await self.app.bot.send_message(
-                    chat_id=self.monitoring_chat_id,
-                    text=f"⚠️ **Ошибка мониторинга:** {str(e)}",
-                    parse_mode=ParseMode.MARKDOWN
-                )
     
     async def _send_long_message(self, chat_id: int, message: str):
         """Отправляем длинное сообщение, разделяя его, если необходимо, чтобы соблюсти лимит в 4096 символов Telegram"""
@@ -1021,10 +848,10 @@ class NegativePostsBot:
                             continue
                             
                         # Добавляем заголовок канала
-                        complete_message += f"\n• **Канал: {channel_data.get('channel_title', channel)}**\n"
+                        complete_message += f"\n• Канал: {channel_data.get('channel_title', channel)}\n"
                         
                         # Добавляем топ негативных постов из этого канала
-                        for post_idx, post in enumerate(negative_posts[:3], 1):  # Show top 3 from each channel
+                        for post_idx, post in enumerate(negative_posts, 1):
                             # Очищаем и форматируем предварительный просмотр текста
                             text_preview = clean_text_preview(post.get('text', ''), 100)  # Короче для совмещенного сообщения
                             
@@ -1093,7 +920,7 @@ class NegativePostsBot:
                         forwards = post.get('forwards', 0)
                         
                         # Создаем Telegram-ссылку
-                        channel_username = metadata.get('channel_username', Config.CHANNEL_USERNAME or '')
+                        channel_username = metadata.get('channel_username', '')
                         if channel_username.startswith('@'):
                             channel_username = channel_username[1:]
                         
@@ -1129,66 +956,6 @@ class NegativePostsBot:
                     filename=os.path.basename(json_path),
                     caption="📄 Данные анализа (ошибка отображения)"
                 )
-    
-    async def _send_negative_post_alert(self, message: dict):
-        """Отправляем уведомление о новом негативном посте"""
-        if not self.monitoring_chat_id:
-            return
-        
-        # Форматируем дату
-        msg_date = message.get('date')
-        if hasattr(msg_date, 'strftime'):
-            formatted_date = msg_date.strftime('%Y-%m-%d %H:%M')
-        else:
-            formatted_date = str(msg_date)
-        
-        # Получаем информацию о настроении
-        sentiment_data = message.get('sentiment', {})
-        negative_score = sentiment_data.get('negative', 0)
-        
-        # Получаем информацию о комментариях
-        comments = message.get('comments', [])
-        total_comments = len(comments)
-        negative_comments = sum(1 for c in comments if c.get('is_negative', False))
-        negative_percentage = (negative_comments / total_comments * 100) if total_comments > 0 else 0
-        
-        # Создаем Telegram-ссылку
-        channel_username = Config.CHANNEL_USERNAME.replace('@', '') if Config.CHANNEL_USERNAME.startswith('@') else Config.CHANNEL_USERNAME
-        post_link = f"https://t.me/{channel_username}/{message['id']}"
-        
-        # Очищаем и форматируем предварительный просмотр текста
-        text_preview = clean_text_preview(message.get('text', ''), 300)
-        
-        # Получаем просмотры и перепосты
-        views = message.get('views', 0)
-        forwards = message.get('forwards', 0)
-        
-        alert_text = f"""🚨 **Новый негативный пост**
-
-Пост ID {message['id']}
-                    📅 {formatted_date}
-                    📊 Оценка: {negative_score:.3f}
-                    💬 Комментарии: {negative_comments}/{total_comments} ({negative_percentage:.1f}% нег.)
-                    👀 Просмотры: {views} | ↗️ Репосты: {forwards}
-
-                    📄 **{text_preview}**
-
-                    🔗 Открыть в Telegram"""
-        
-        try:
-            # Создаем inline-клавиатуру с ссылкой
-            keyboard = [[InlineKeyboardButton("🔗 Открыть в Telegram", url=post_link)]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await self.app.bot.send_message(
-                chat_id=self.monitoring_chat_id,
-                text=alert_text,
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.MARKDOWN,
-                disable_web_page_preview=True
-            )
-        except Exception as e:
-            logger.error(f"Failed to send alert: {e}")
     
     async def _show_channels_selection_menu(self, chat_id: int, context: ContextTypes.DEFAULT_TYPE):
         """Отображаем меню выбора каналов"""
