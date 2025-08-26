@@ -35,17 +35,14 @@ class NegativePostsBot:
         self.sentiment_analyzer = SentimentAnalyzer()
         self.report_generator = ReportGenerator()
         
-        # Состояние мониторинга
-        self.monitoring_active = False
         self.sent_message_ids: Set[int] = set()
-        self.monitoring_chat_id = None
         
         # Последний сгенерированный путь HTML
         self.last_html_path = None
         
         # Выбранные каналы для анализа
         self.selected_channels = Config.get_channels_list()  # Default to all configured channels
-        
+
         # Предотвращение дублирования для всех команд и обратных вызовов
         self.recent_callbacks: Dict[str, float] = {}
         self.recent_commands: Dict[str, float] = {}  # Отслеживаем все команды
@@ -61,7 +58,6 @@ class NegativePostsBot:
         self.app.add_handler(CommandHandler("start", self.start_command))
         self.app.add_handler(CommandHandler("help", self.help_command))
         self.app.add_handler(CommandHandler("analyze", self.analyze_command))
-        self.app.add_handler(CommandHandler("status", self.status_command))
         self.app.add_handler(CallbackQueryHandler(self.button_callback))
     
     def _load_sent_messages(self):
@@ -99,12 +95,11 @@ class NegativePostsBot:
         keyboard = [
             [InlineKeyboardButton("📊 Анализировать", callback_data="analyze_now")],
             [InlineKeyboardButton("📋 Выбрать каналы", callback_data="select_channels")],
-            [InlineKeyboardButton("🔄 Начать мониторинг", callback_data="start_monitor")],
             [InlineKeyboardButton("ℹ️ Помощь", callback_data="help")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        channels_list = Config.get_channels_list()
+        channels_list = self.selected_channels
         channels_text = ", ".join(channels_list)
         
         welcome_text = """
@@ -116,7 +111,6 @@ class NegativePostsBot:
 **Доступные действия:**
 📊 **Анализировать** - анализ сообщений за выбранный период
 📋 **Выбрать каналы** - настроить список каналов для анализа
-🔄 **Мониторинг** - проверка новых негативных постов
 
 Выберите действие:
         """.format(channels_text, Config.NEGATIVE_COMMENT_THRESHOLD * 100)
@@ -136,7 +130,6 @@ class NegativePostsBot:
 /start - начало работы
 /help - справка бота
 /analyze - анализ сообщений за выбранный период
-/status - текущий статус
 
 **Режимы работы:**
 
@@ -151,16 +144,11 @@ class NegativePostsBot:
 - анализ сообщений за выбранный период
 - поиск негативных постов на основе комментариев
 
-🔄 **Мониторинг**  
-- проверка канала каждые 5 минут
-- отправка уведомлений о новых негативных постах
-- остановка мониторинга командой /stop
-
 **Конфигурация:**
 - Каналы: `{channel}`
 - Порог негативности: {threshold}%
         """.format(
-            channel=Config.get_channels_list(),
+            channel=self.selected_channels,
             threshold=Config.NEGATIVE_COMMENT_THRESHOLD * 100
         )
     
@@ -183,27 +171,6 @@ class NegativePostsBot:
             return
             
         await self._show_date_selection_menu(chat_id, context)
-    
-    async def status_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Обработка команды /status"""
-        chat_id = update.effective_chat.id
-        
-        # Предотвращение дублирования команды /status
-        if self._is_duplicate_command(chat_id, "status"):
-            return
-            
-        status_text = f"""
-📊 **Статус бота**
-
-**Конфигурация:**
-• Порог негативности: {Config.NEGATIVE_COMMENT_THRESHOLD * 100}%
-
-**Мониторинг:**
-• Статус: {'🔄 Активен' if self.monitoring_active else '⏹️ Неактивен'}
-• Отслеживаемых сообщений: {len(self.sent_message_ids)}
-        """
-        
-        await update.message.reply_text(status_text, parse_mode=ParseMode.MARKDOWN)
     
     def _is_duplicate_callback(self, callback_key: str, timeout: float = 3.0) -> bool:
         """Проверяем, был ли этот обратный вызов выполнен недавно, чтобы предотвратить дублирование"""
@@ -615,15 +582,15 @@ class NegativePostsBot:
                 text=f"🔄 **Анализ за {period_name}...**",
                 parse_mode=ParseMode.MARKDOWN
             )
-            
+
             # Получаем сообщения за выбранный период из выбранных каналов
-            async with TelegramNewsClient() as client:
-                await client.connect(self.selected_channels)
+            async with TelegramNewsClient(self.selected_channels) as client:
+                await client.connect()
                 messages_by_channel = await client.get_recent_messages_from_all_channels(
                     limit=Config.MAX_MESSAGES,
                     days_back=(end_date - start_date).days + 1
                 )
-            
+
             # Фильтруем сообщения по диапазону дат и объединяем все каналы
             all_messages = []
             cutoff_start = start_date.replace(tzinfo=None)
@@ -645,7 +612,7 @@ class NegativePostsBot:
                     message_id=progress_msg.message_id,
                     text="ℹ️ **Анализ завершен**\n\n"
                          "📅 Период: {} - {}\n"
-                         "📥 Сообщений не найдено за указанный период.".format(start_date.strftime('%d.%m.%Y'), end_date.strftime('%d.%m.%Y')),
+                         "📥 Негативных сообщений не найдено за указанный период".format(start_date.strftime('%d.%m.%Y'), end_date.strftime('%d.%m.%Y')),
                     parse_mode=ParseMode.MARKDOWN
                 )
                 return
@@ -658,7 +625,7 @@ class NegativePostsBot:
             await context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=progress_msg.message_id,
-                text="🔄 **Анализ за {}...**\n\n"
+                text="🔄 Анализ за {}...\n\n"
                      "📅 Период: {} - {}\n"
                      "📥 Получено {} сообщений\n"
                      "📋 По каналам: {}\n"
@@ -668,18 +635,17 @@ class NegativePostsBot:
                          end_date.strftime('%d.%m.%Y'),
                          len(all_messages),
                          ", ".join(channels_info)
-                     ),
-                parse_mode=ParseMode.MARKDOWN
+                     )
             )
-            
+
             # Анализируем сообщения из всех каналов
             all_messages = self.sentiment_analyzer.analyze_messages_sentiment(all_messages)
-            
+
             # Генерируем многоканальный отчет
             await context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=progress_msg.message_id,
-                text="🔄 **Анализ за {}...**\n\n"
+                text="🔄 Анализ за {}...\n\n"
                      "📅 Период: {} - {}\n"
                      "📥 Обработано {} сообщений\n"
                      "📋 По каналам: {}\n"
@@ -689,18 +655,17 @@ class NegativePostsBot:
                          end_date.strftime('%d.%m.%Y'),
                          len(all_messages),
                          ", ".join(channels_info)
-                     ),
-                parse_mode=ParseMode.MARKDOWN
+                     )
             )
             
             # Генерируем многоканальный отчет
             report_result = self.report_generator.generate_multichannel_negative_posts_report(all_messages)
-            
+
             # Завершаем анализ
             await context.bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=progress_msg.message_id,
-                text="✅ **Анализ завершен за {}!**\n\n"
+                text="✅ Анализ завершен за {}!\n\n"
                      "📅 Период: {} - {}\n"
                      "📥 Обработано {} сообщений\n"
                      "📋 По каналам: {}\n"
@@ -713,8 +678,7 @@ class NegativePostsBot:
                          ", ".join(channels_info),
                          report_result['total_negative'],
                          (report_result['total_negative'] / report_result['total_messages'] * 100) if report_result['total_messages'] > 0 else 0
-                     ),
-                parse_mode=ParseMode.MARKDOWN
+                     )
             )
             
             # Сохраняем путь HTML-файла и создаем кнопку
@@ -956,7 +920,7 @@ class NegativePostsBot:
     
     async def _show_channels_selection_menu(self, chat_id: int, context: ContextTypes.DEFAULT_TYPE):
         """Отображаем меню выбора каналов"""
-        available_channels = Config.get_channels_list()
+        available_channels = self.selected_channels
         
         if not available_channels:
             await context.bot.send_message(
@@ -1000,8 +964,10 @@ class NegativePostsBot:
         """Переключаем выбор канала"""
         if channel in self.selected_channels:
             self.selected_channels.remove(channel)
+            logger.debug(f"Removed channel: {channel}")
         else:
             self.selected_channels.append(channel)
+            logger.debug(f"Added channel: {channel}")
         
         # Обновляем сообщение с новым выбором
         await self._show_channels_selection_menu(chat_id, context)

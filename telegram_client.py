@@ -10,26 +10,23 @@ from logging_config import setup_logger
 logger = setup_logger(__name__)
 
 class TelegramNewsClient:
-    def __init__(self):
+    def __init__(self, channels=None):
         self.client = TelegramClient(
             'news_analyzer_session',
             Config.TELEGRAM_API_ID,
             Config.TELEGRAM_API_HASH
         )
-        self.channel_entities = {}  # Словарь: username -> entity
-    
-    async def connect(self, channels=None):
+        self.channel_entities = {}
+        self.channels = channels
+
+    async def connect(self):
         """Подключение к Telegram и аутентификация"""
         try:
             await self.client.start(phone=Config.TELEGRAM_PHONE)
             logger.info("Successfully connected to Telegram")
             
-            # Получение списка каналов
-            if channels is None:
-                channels = Config.get_channels_list()
-            
             # Подключение к каждому каналу
-            for channel_username in channels:
+            for channel_username in self.channels:
                 try:
                     entity = await self.client.get_entity(channel_username)
                     self.channel_entities[channel_username] = entity
