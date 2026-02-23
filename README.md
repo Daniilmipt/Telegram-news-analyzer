@@ -1,61 +1,61 @@
-# Telegram News Analyzer
+## Telegram News Analyzer
 
-🤖 **Интеллектуальный бот для анализа негативных постов в Telegram-каналах**
+🤖 **Intelligent bot for analyzing negative posts in Telegram channels**
 
-## 📋 Описание
+### 📋 Description
 
-Telegram News Analyzer — это мощный инструмент для мониторинга и анализа настроений в Telegram-каналах. Бот использует современные технологии машинного обучения для выявления негативных постов на основе анализа комментариев пользователей.
+Telegram News Analyzer is a powerful tool for monitoring and analyzing sentiment in Telegram channels. The bot uses modern machine learning technologies to detect negative posts based on the analysis of user comments.
 
-## ✨ Основные возможности
+### ✨ Key Features
 
-- 🔍 **Анализ настроений** — автоматическое определение негативных постов с помощью ИИ
-- 📊 **Многоканальный мониторинг** — одновременный анализ нескольких каналов
-- 📅 **Гибкие временные рамки** — анализ за сегодня, вчера, неделю, месяц или произвольный период
-- 🎯 **Настраиваемые пороги** — возможность настройки чувствительности анализа
+- 🔍 **Sentiment analysis** — automatic detection of negative posts using AI  
+- 📊 **Multi-channel monitoring** — simultaneous analysis of multiple channels  
+- 📅 **Flexible time ranges** — analysis for today, yesterday, last week, last month, or a custom period  
+- 🎯 **Configurable thresholds** — ability to adjust the sensitivity of the analysis  
 
-## 🛠 Технологии
+### 🛠 Technologies
 
-- **Python 3.8+** — основной язык программирования
-- **Telethon** — работа с Telegram API
-- **Transformers** — модели машинного обучения для анализа настроений
-- **PyTorch** — фреймворк для глубокого обучения
-- **spaCy & NLTK** — обработка естественного языка
-- **pandas & scikit-learn** — анализ данных
-- **python-telegram-bot** — создание Telegram-бота
+- **Python 3.8+** — main programming language  
+- **Telethon** — interaction with the Telegram API  
+- **Transformers** — machine learning models for sentiment analysis  
+- **PyTorch** — deep learning framework  
+- **spaCy & NLTK** — natural language processing  
+- **pandas & scikit-learn** — data analysis  
+- **python-telegram-bot** — Telegram bot framework  
 
-## 🚀 Установка и настройка
+### 🚀 Installation and Setup
 
-### 1. Клонирование репозитория
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/your-username/Telegram-news-analyzer.git
 cd Telegram-news-analyzer
 ```
 
-### 2. Создание виртуального окружения
+#### 2. Create a virtual environment
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# или
+# or
 venv\Scripts\activate  # Windows
 ```
 
-### 3. Установка зависимостей
+#### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Настройка конфигурации
+#### 4. Configure environment
 
-Скопируйте файл `env_template` в `.env` и заполните необходимые параметры:
+Copy the `env_template` file to `.env` and fill in the required parameters:
 
 ```bash
 cp env_template .env
 ```
 
-Отредактируйте `.env` файл:
+Edit the `.env` file:
 
 ```env
 # Telegram API Configuration
@@ -75,144 +75,143 @@ OUTPUT_DIR=output
 MAX_MESSAGES=200
 ```
 
-### 5. Получение API-ключей
+#### 5. Obtain API keys
 
-#### Telegram API:
-1. Перейдите на [my.telegram.org](https://my.telegram.org/auth)
-2. Войдите в свой аккаунт
-3. Создайте новое приложение
-4. Скопируйте `API ID` и `API Hash`
+##### Telegram API
+1. Go to [my.telegram.org](https://my.telegram.org/auth)  
+2. Log in to your account  
+3. Create a new application  
+4. Copy the `API ID` and `API Hash`  
 
-#### Telegram Bot Token:
-1. Найдите [@BotFather](https://t.me/BotFather) в Telegram
-2. Отправьте команду `/newbot`
-3. Следуйте инструкциям для создания бота
-4. Скопируйте полученный токен
+##### Telegram Bot Token
+1. Find [@BotFather](https://t.me/BotFather) in Telegram  
+2. Send the `/newbot` command  
+3. Follow the instructions to create a bot  
+4. Copy the generated token  
 
-## 🎯 Использование
+### 🎯 Usage
 
-### Запуск бота
+#### Run the bot
 
 ```bash
 python main.py
 ```
 
-### Команды бота
+#### Bot commands
 
-- `/start` — начало работы и главное меню
-- `/help` — справка по использованию
-- `/analyze` — запуск анализа постов
+- `/start` — start and main menu  
+- `/help` — usage help  
+- `/analyze` — start post analysis  
 
-### Возможности интерфейса
+#### Interface options
 
-1. **📊 Анализировать** — выбор периода и запуск анализа
-2. **📋 Выбрать каналы** — настройка списка каналов для мониторинга
-3. **ℹ️ Помощь** — подробная справка по функциям
+1. **📊 Analyze** — select a period and start analysis  
+2. **📋 Select channels** — configure the list of channels to monitor  
+3. **ℹ️ Help** — detailed information about the features  
 
-### Варианты анализа
+#### Analysis modes
 
-- 📅 **Сегодня** — анализ постов за текущий день
-- 📆 **Вчера** — анализ постов за предыдущий день
-- 📊 **Последние 7 дней** — недельный анализ
-- 📈 **Последние 30 дней** — месячный анализ
-- 🔧 **Выбрать период** — произвольный временной диапазон
+- 📅 **Today** — analyze posts for the current day  
+- 📆 **Yesterday** — analyze posts for the previous day  
+- 📊 **Last 7 days** — weekly analysis  
+- 📈 **Last 30 days** — monthly analysis  
+- 🔧 **Custom period** — arbitrary time range  
 
-## 📊 Форматы отчетов
+### 📊 Report Formats
 
-### HTML-отчет
-- Интерактивная веб-страница с детальной статистикой
-- Визуализация данных и графики
-- Удобная навигация по результатам
+#### HTML report
+- Interactive web page with detailed statistics  
+- Data visualizations and charts  
+- Convenient navigation through results  
 
-### JSON-данные
-- Структурированные данные для дальнейшей обработки
-- Полная информация о постах и комментариях
-- Метрики и статистика
+#### JSON data
+- Structured data for further processing  
+- Complete information about posts and comments  
+- Metrics and statistics  
 
-## ⚙️ Настройка параметров
+### ⚙️ Parameters Configuration
 
-### Порог негативности (`NEGATIVE_COMMENT_THRESHOLD`)
-- **0.3** (30%) — умеренная чувствительность
-- **0.5** (50%) — высокая чувствительность
-- **0.2** (20%) — очень высокая чувствительность
+#### Negativity threshold (`NEGATIVE_COMMENT_THRESHOLD`)
+- **0.3** (30%) — moderate sensitivity  
+- **0.5** (50%) — high sensitivity  
+- **0.2** (20%) — very high sensitivity  
 
-### Максимальное количество сообщений (`MAX_MESSAGES`)
-- Рекомендуется: **100-500** сообщений
-- Для больших каналов: **1000+** сообщений
+#### Maximum number of messages (`MAX_MESSAGES`)
+- Recommended: **100–500** messages  
+- For large channels: **1000+** messages  
 
-## 📁 Структура проекта
+### 📁 Project Structure
 
-```
+```text
 Telegram-news-analyzer/
-├── main.py                 # Точка входа
-├── telegram_bot.py         # Логика Telegram-бота
-├── telegram_client.py      # Клиент для работы с Telegram API
-├── sentiment_analyzer.py   # Анализ настроений
-├── report_generator.py     # Генерация отчетов
-├── config.py              # Конфигурация
-├── logging_config.py      # Настройка логирования
-├── requirements.txt       # Зависимости
-├── env_template          # Шаблон конфигурации
-└── output/               # Папка с отчетами
+├── main.py                 # Entry point
+├── telegram_bot.py         # Telegram bot logic
+├── telegram_client.py      # Client for working with Telegram API
+├── sentiment_analyzer.py   # Sentiment analysis
+├── report_generator.py     # Report generation
+├── config.py               # Configuration
+├── logging_config.py       # Logging configuration
+├── requirements.txt        # Dependencies
+├── env_template            # Configuration template
+└── output/                 # Reports folder
 ```
 
-## 🔧 Разработка
+### 🔧 Development
 
-### Добавление новых каналов
+#### Adding new channels
 
-Отредактируйте переменную `CHANNELS_LIST` в файле `.env`:
+Edit the `CHANNELS_LIST` variable in the `.env` file:
 
 ```env
 CHANNELS_LIST=@channel1,@channel2,@channel3
 ```
 
-### Настройка модели анализа
+#### Configuring the analysis model
 
-В файле `sentiment_analyzer.py` можно изменить модель машинного обучения:
+You can change the machine learning model in `sentiment_analyzer.py`:
 
 ```python
 model_name = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 ```
 
-### Кастомизация отчетов
+#### Customizing reports
 
-Отредактируйте файл `report_generator.py` для изменения формата и стиля отчетов.
+Edit `report_generator.py` to change the format and style of the reports.
 
-## 🐛 Устранение неполадок
+### 🐛 Troubleshooting
 
-### Частые проблемы
+#### Common issues
 
-1. **Ошибка авторизации Telegram**
-   - Проверьте правильность `API_ID` и `API_HASH`
-   - Убедитесь, что номер телефона указан в международном формате
+1. **Telegram authorization error**  
+   - Check that `API_ID` and `API_HASH` are correct  
+   - Make sure the phone number is in international format  
 
-2. **Бот не отвечает**
-   - Проверьте правильность `BOT_TOKEN`
-   - Убедитесь, что бот запущен и не заблокирован
+2. **The bot does not respond**  
+   - Check that `BOT_TOKEN` is correct  
+   - Make sure the bot is running and not blocked  
 
-3. **Ошибки анализа настроений**
-   - Проверьте подключение к интернету
-   - Убедитесь, что установлены все зависимости
+3. **Sentiment analysis errors**  
+   - Check your internet connection  
+   - Make sure all dependencies are installed  
 
-### Логи
+#### Logs
 
-Логи сохраняются в файле `logs/news_analyzer.log` для отладки.
+Logs are saved to `logs/news_analyzer.log` for debugging.
 
+### 🤝 Contributing
 
-## 🤝 Вклад в проект
+We welcome contributions to the project! Please:
 
-Мы приветствуем вклад в развитие проекта! Пожалуйста:
+1. Fork the repository  
+2. Create a branch for your feature  
+3. Make your changes  
+4. Open a Pull Request  
 
-1. Форкните репозиторий
-2. Создайте ветку для новой функции
-3. Внесите изменения
-4. Создайте Pull Request
+### 📞 Support
 
-## 📞 Поддержка
+If you have any questions or issues:
 
-Если у вас возникли вопросы или проблемы:
+- Open an [Issue](https://github.com/your-username/Telegram-news-analyzer/issues)  
 
-- Создайте [Issue](https://github.com/your-username/Telegram-news-analyzer/issues)
+**Created with ❤️ for analyzing Telegram content**
 
-
-**Создано с ❤️ для анализа Telegram-контента**
